@@ -1,0 +1,6 @@
+1.def NetworkConnection:
+if you enter the password or SSID wrongly, it will raise an error and will go for 10 times.
+after that you should figure out that you have entered password wrong.
+1.Fix:
+it must run for 10 times and after that tells you:
+"You entered SSID: {SSID} and Password: {Password}; one of each might be wrong, try again..."
