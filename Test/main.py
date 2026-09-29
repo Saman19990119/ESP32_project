@@ -1,42 +1,36 @@
 import machine
 import time
 import network
-onboard = machine.Pin(2, machine.Pin.OUT)
+
 
 def SwitchPinPosition(pins,position):#it switches position of the given Pin
     pins.value(position)
-    if position == 1:
-        print (f"{pins} set to {position} position.")
-    elif position == 0:
-        print (f"{pins} set to {position} position.")
-    else:
-        print("wrong position, 0 as LOW and 1 as HIGH.")
+    # just for test the onboard is either working and being logged
+    # if position == 1:
+    #     print (f"{pins} set to {position} position.")
+    # elif position == 0:
+    #     print (f"{pins} set to {position} position.")
+    # else:
+    #     print("wrong position, 0 as LOW and 1 as HIGH.")
 
-def BlinkPin(pins = machine.Pin(2,machine.Pin.OUT),duration_ms = '15', repetition = '1'):# it makes the given Pin blinking with a given frequency
+def BlinkPin(pins = 2 ,duration_ms = '500', repetition = '1'):# it makes the given Pin blinking with a given frequency
+    DefaultPin = machine.Pin(pins,machine.Pin.OUT)
+    
     if repetition == '1':
-        i = 0
-        while i < 10 :
-            i+=1
-            SwitchPinPosition(onboard,1)
+        for i in range (0,3):
+            SwitchPinPosition(DefaultPin,1)
             time.sleep(1)
-            SwitchPinPosition(onboard,0)
+            SwitchPinPosition(DefaultPin,0)
             time.sleep(1)
 
-    elif repetition == '0':
-        while True:
-            SwitchPinPosition(onboard,1)
-            time.sleep(1)
-            SwitchPinPosition(onboard,0)
-            time.sleep(1)
-
-    elif repetition != '1':
+    elif pins != 2 or duration_ms != '500' or repetition != '1':
         for i in range (1, int(repetition)+ 1):
-            SwitchPinPosition(pins,1)
+            SwitchPinPosition(DefaultPin,1)
             time.sleep_ms(int(duration_ms))
-            SwitchPinPosition(pins,0)
+            SwitchPinPosition(DefaultPin,0)
             time.sleep_ms(int(duration_ms))
 
-# BlinkPin()
+BlinkPin()
 
 def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
     Wifi = network.WLAN(network.STA_IF)
@@ -52,8 +46,10 @@ def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
                 f'Subnet: {Wifi.ifconfig()[1]}\n\r'
                 f'Gateway: {Wifi.ifconfig()[2]}\n\r'
                 f'DNS: {Wifi.ifconfig()[3]}\n\r')
+            BlinkPin(2,'150','10')
             
         else:
+            
             Wifi.active(False)
             time.sleep_ms(500)
             Wifi.active(True)
@@ -61,6 +57,7 @@ def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
             a = 0
 
             for i in range (0,10):
+                BlinkPin(2,'250','2')
                 time.sleep_ms(500)                
                 print('initializing the connection...\r\n')
 
@@ -70,6 +67,7 @@ def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
                         f'Subnet: {Wifi.ifconfig()[1]}\n\r'
                         f'Gateway: {Wifi.ifconfig()[2]}\n\r'
                         f'DNS: {Wifi.ifconfig()[3]}\n\r')
+                    BlinkPin(2,'150','2')
                     break
 
                 Wifi.connect(SSID,Password)
@@ -91,9 +89,10 @@ def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
         time.sleep_ms(500)
         Wifi.active(False)
         time.sleep_ms(500)
+        BlinkPin(2,'350','2')
         print("Wifi_Connection has been disabled and Network turned off.")
 
-#NetworkConnection(Wifi_Connection=False, SSID= 'TP-LINK', Password='36516188')
+# NetworkConnection(Wifi_Connection=False, SSID= 'TP-LINK', Password='36516188')
 
 def NetworkStatus():
     Wifi = network.WLAN(network.STA_IF)
@@ -108,7 +107,7 @@ def NetworkStatus():
     else:
         print('Network is off')
 
-#NetworkStatus()
+# NetworkStatus()
 
 # print (wlan.scan())
 
