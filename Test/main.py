@@ -30,7 +30,7 @@ def BlinkPin(pins = 2 ,duration_ms = '500', repetition = '1'):# it makes the giv
             SwitchPinPosition(DefaultPin,0)
             time.sleep_ms(int(duration_ms))
 
-BlinkPin()
+# BlinkPin()
 
 def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
     Wifi = network.WLAN(network.STA_IF)
@@ -57,30 +57,33 @@ def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
             a = 0
 
             for i in range (0,10):
-                BlinkPin(2,'250','2')
-                time.sleep_ms(500)                
-                print('initializing the connection...\r\n')
+                try:
+                    a += 1
+                    BlinkPin(2,'250','2')
+                    time.sleep_ms(500)                
+                    print('initializing the connection...\r\n')
+                    
+                    if a == 10:
+                        print(f"You entered SSID: {SSID} and Password: {Password}; one of each might be wrong, try again...")
+                        break
 
-                if Wifi.isconnected():
-                    print(f'Successfully connected to {SSID}.\n\r'
-                        f'IP: {Wifi.ifconfig()[0]}\n\r'
-                        f'Subnet: {Wifi.ifconfig()[1]}\n\r'
-                        f'Gateway: {Wifi.ifconfig()[2]}\n\r'
-                        f'DNS: {Wifi.ifconfig()[3]}\n\r')
-                    BlinkPin(2,'150','2')
-                    break
+                    elif Wifi.isconnected():
+                        print(f'Successfully connected to {SSID}.\n\r'
+                            f'IP: {Wifi.ifconfig()[0]}\n\r'
+                            f'Subnet: {Wifi.ifconfig()[1]}\n\r'
+                            f'Gateway: {Wifi.ifconfig()[2]}\n\r'
+                            f'DNS: {Wifi.ifconfig()[3]}\n\r')
+                        BlinkPin(2,'150','2')
+                        break
 
-                Wifi.connect(SSID,Password)
-                time.sleep_ms(500)
-                a += 1
+                    else:
+                        Wifi.connect(SSID,Password)
+                        time.sleep_ms(500)
+                    
+                except:
+                        print('Retry...\n\r')
+                        pass
 
-                if a == 10:
-                    print(f"You entered SSID: {SSID} and Password: {Password}; one of each might be wrong, try again...")
-                    break
-                
-                elif a != 10:
-                    print('Retry...\n\r')
-                    pass
 
     elif not Wifi_Connection and SSID !='' and Password != '': #default values of this function.
         Wifi.active(True)
@@ -92,7 +95,7 @@ def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
         BlinkPin(2,'350','2')
         print("Wifi_Connection has been disabled and Network turned off.")
 
-# NetworkConnection(Wifi_Connection=False, SSID= 'TP-LINK', Password='36516188')
+NetworkConnection(Wifi_Connection=True, SSID= 'TP-LINK', Password='36516188')
 
 def NetworkStatus():
     Wifi = network.WLAN(network.STA_IF)
