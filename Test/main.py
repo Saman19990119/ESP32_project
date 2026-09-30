@@ -32,44 +32,108 @@ def BlinkPin(pins = 2 ,duration_ms = '300', repetition = '1'):# it makes the giv
 
 BlinkPin()
 
-# ----------------------------------------network connection class test------------------------------------------
-
-class internet():
-    
-    def __init__(self,Wifi_Connection = False ,SSId = '', Password = ''):
-
+class Internet():
+    def __init__(self,Wifi_Connection = True ,SSId = '', Password = ''):
         self.Wifi_Connection = Wifi_Connection
         self.SSId = SSId
         self.Password = Password
 
-    def __str__(self):
+    def Seasrch(self):
         Wifi = network.WLAN(network.STA_IF)
-        for i in Wifi.scan():
-            print(i)
+        
+        if Wifi.isconnected():
+            time.sleep_ms(500)
+            Wifi.active(True)
+            time.sleep_ms(500)
+            WifiList = Wifi.scan()
+            time.sleep_ms(500)
+            print('Searching...')
+            for i in WifiList:
+                print(i)
+        
+        else:
+            Wifi.active(True)
+            time.sleep_ms(500)
+            Wifi.disconnect()
+            time.sleep_ms(500)
+            WifiList = Wifi.scan()
+            time.sleep_ms(500)
+            Wifi.active(False)
+            for i in WifiList:
+                print(i)
 
-    def NetworkConnection(self):
-        Wifi = network.WLAN(network.STA_IF)
+    def Connection(self,StaticIP = '', SubnetMask = '', GateWay = '', Dns = ''):
+        self.StaticIP = StaticIP
+        self.SubnetMask = SubnetMask
+        self.GateWay = GateWay
+        self.Dns = Dns
+        if StaticIP =='' and SubnetMask == '' and GateWay == '' and Dns =='' :
+            Wifi = network.WLAN(network.STA_IF)
+            if self.Wifi_Connection and self.SSId == '' and self.Password == '':
+                print("please insert your ssid and password")
 
-        if self.Wifi_Connection and self.SSId == '' and self.Password == '':
-            print("please insert your ssid and password")
+            elif self.Wifi_Connection and self.SSId != '' and self.Password != '': #self.Wifi_Connection set to be true.
 
-        elif self.Wifi_Connection and self.SSId != '' and self.Password != '': #self.Wifi_Connection set to be true.
+                if Wifi.isconnected():
+                    print(f'Device is connected to {self.SSId}.\n\r'
+                        f'IP: {Wifi.ifconfig()[0]}\n\r'
+                        f'Subnet: {Wifi.ifconfig()[1]}\n\r'
+                        f'Gateway: {Wifi.ifconfig()[2]}\n\r'
+                        f'DNS: {Wifi.ifconfig()[3]}\n\r')
+                    BlinkPin(2,'166','3')
+                    
+                else:
+                    
+                    Wifi.active(False)
+                    time.sleep_ms(500)
+                    Wifi.active(True)
+                    time.sleep_ms(500)
+                    Wifi.ipconfig (dhcp4 = True)    
+                    for i in range (0,10):
+                        try:
+                            BlinkPin(2,'250','2')
+                            time.sleep_ms(500)                
+                            print('initializing the connection...\n\r')
 
-            if Wifi.isconnected():
-                print(f'Device is connected to {self.SSId}.\n\r'
-                    f'IP: {Wifi.ifconfig()[0]}\n\r'
-                    f'Subnet: {Wifi.ifconfig()[1]}\n\r'
-                    f'Gateway: {Wifi.ifconfig()[2]}\n\r'
-                    f'DNS: {Wifi.ifconfig()[3]}\n\r')
-                BlinkPin(2,'150','10')
-                
-            else:
-                
+                            if i == 9:
+                                print(f"You entered SSID: {self.SSId} and Password: {self.Password}; one of each might be wrong, try again...")
+                                break
+
+                            elif Wifi.isconnected():
+                                print(f'Successfully connected to {self.SSId}.\n\r'
+                                    f'IP: {Wifi.ifconfig()[0]}\n\r'
+                                    f'Subnet: {Wifi.ifconfig()[1]}\n\r'
+                                    f'Gateway: {Wifi.ifconfig()[2]}\n\r'
+                                    f'DNS: {Wifi.ifconfig()[3]}\n\r')
+                                BlinkPin(2,'166','3')
+                                break
+
+                            else:
+                                Wifi.connect(self.SSId,self.Password)
+                                time.sleep_ms(500)
+                            
+                        except:
+                                print('Retry...\n\r')
+                                pass
+
+            elif not self.Wifi_Connection: #default values of this function.
+                Wifi.active(True)
+                time.sleep_ms(500)
+                Wifi.disconnect()
+                time.sleep_ms(500)
+                Wifi.active(False)
+                time.sleep_ms(500)
+                BlinkPin(2,'350','2')
+                print("Wifi_Connection has been disabled and Network turned off.")
+
+        elif StaticIP !='' and SubnetMask != '' and GateWay != '' and Dns !='':
+            Wifi = network.WLAN(network.STA_IF)
+            if self.Wifi_Connection:
+
                 Wifi.active(False)
                 time.sleep_ms(500)
                 Wifi.active(True)
                 time.sleep_ms(500)
-                a = 0
 
                 for i in range (0,10):
                     try:
@@ -80,15 +144,26 @@ class internet():
                         if i == 9:
                             print(f"You entered SSID: {self.SSId} and Password: {self.Password}; one of each might be wrong, try again...")
                             break
-
+                        
                         elif Wifi.isconnected():
-                            print(f'Successfully connected to {self.SSId}.\n\r'
-                                f'IP: {Wifi.ifconfig()[0]}\n\r'
-                                f'Subnet: {Wifi.ifconfig()[1]}\n\r'
-                                f'Gateway: {Wifi.ifconfig()[2]}\n\r'
-                                f'DNS: {Wifi.ifconfig()[3]}\n\r')
-                            BlinkPin(2,'150','2')
-                            break
+                            
+                            if Wifi.ifconfig()[0] != self.StaticIP:
+                                Wifi.ifconfig((
+                                    self.StaticIP,
+                                    self.SubnetMask,
+                                    self.GateWay,
+                                    self.Dns
+                                ))
+                                time.sleep_ms(500)
+                            
+                            if Wifi.ifconfig()[0] == self.StaticIP:
+                                print(f'Successfully connected to {self.SSId}.\n\r'
+                                    f'IP: {Wifi.ifconfig()[0]}\n\r'
+                                    f'Subnet: {Wifi.ifconfig()[1]}\n\r'
+                                    f'Gateway: {Wifi.ifconfig()[2]}\n\r'
+                                    f'DNS: {Wifi.ifconfig()[3]}\n\r')
+                                BlinkPin(2,'166','3')
+                                break
 
                         else:
                             Wifi.connect(self.SSId,self.Password)
@@ -98,174 +173,47 @@ class internet():
                             print('Retry...\n\r')
                             pass
 
-        elif not self.Wifi_Connection: #default values of this function.
-            Wifi.active(True)
-            time.sleep_ms(500)
-            Wifi.disconnect()
-            time.sleep_ms(500)
-            Wifi.active(False)
-            time.sleep_ms(500)
-            BlinkPin(2,'350','2')
-            print("Wifi_Connection has been disabled and Network turned off.")
-            
+            elif not self.Wifi_Connection: #default values of this function.
+                Wifi.active(True)
+                time.sleep_ms(500)
+                Wifi.disconnect()
+                time.sleep_ms(500)
+                Wifi.active(False)
+                time.sleep_ms(500)
+                BlinkPin(2,'1000','1')
+                print("Wifi_Connection has been disabled and Network turned off.")
 
-class IpStatic(internet):
-    def __init__(self,  IpStatic = '192.168.1.32',
-                        SubnetMask = '225,225,225,0',
-                        Gateway = '192.168.1.1',
-                        DNs = '192.168.1.1',
-                        Wifi_Connection=False, SSId='', Password=''):
-        
-        super().__init__(Wifi_Connection, SSId, Password)
-        self.IpStatic = IpStatic
-        self.SubnetMask = SubnetMask
-        self.Gateway = Gateway
-        self.DNs = DNs
-
-
-
-    def Static(self):
-        if self.Wifi_Connection:
-
-            Wifi = network.WLAN(network.STA_IF)
-            Wifi.active(False)
-            time.sleep_ms(500)
-            Wifi.active(True)
-            time.sleep_ms(500)
-
-            for i in range (0,10):
-                try:
-                    BlinkPin(2,'250','2')
-                    time.sleep_ms(500)                
-                    print('initializing the connection...\n\r')
-
-                    if i == 9:
-                        print(f"You entered SSID: {self.SSId} and Password: {self.Password}; one of each might be wrong, try again...")
-                        break
-                    
-                    elif Wifi.isconnected():
-                        
-                        if Wifi.ifconfig()[0] != self.IpStatic:
-                            Wifi.ifconfig((
-                                self.IpStatic,
-                                self.SubnetMask,
-                                self.Gateway,
-                                self.DNs
-                            ))
-                            time.sleep_ms(500)
-                        
-                        if Wifi.ifconfig()[0] == self.IpStatic:
-                            print(f'Successfully connected to {self.SSId}.\n\r'
-                                f'IP: {Wifi.ifconfig()[0]}\n\r'
-                                f'Subnet: {Wifi.ifconfig()[1]}\n\r'
-                                f'Gateway: {Wifi.ifconfig()[2]}\n\r'
-                                f'DNS: {Wifi.ifconfig()[3]}\n\r')
-                            BlinkPin(2,'150','2')
-                            break
-
-                    else:
-                        Wifi.connect(self.SSId,self.Password)
-                        time.sleep_ms(500)
-                    
-                except:
-                        print('Retry...\n\r')
-                        pass
-                
-        else:
-            super().NetworkConnection()
-
-Home = IpStatic('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1',False,'TP-LINK','36516188')
-# home = internet(False,'TP-LINK','36516188')
-
-Home.Static()
-#home.NetworkConnection()
-
-# ------------------------------------------------old deffinition to connect to network------------------------------------
-# def NetworkConnection(Wifi_Connection = False ,SSID = '', Password = ''):
-#     Wifi = network.WLAN(network.STA_IF)
-
-#     if Wifi_Connection and SSID == '' and Password == '':
-#         print("please insert your ssid and password")
-
-#     elif Wifi_Connection and SSID != '' and Password != '': #Wifi_Connection set to be true.
-
-#         if Wifi.isconnected():
-#             print(f'Device is connected to {SSID}.\n\r'
-#                 f'IP: {Wifi.ifconfig()[0]}\n\r'
-#                 f'Subnet: {Wifi.ifconfig()[1]}\n\r'
-#                 f'Gateway: {Wifi.ifconfig()[2]}\n\r'
-#                 f'DNS: {Wifi.ifconfig()[3]}\n\r')
-#             BlinkPin(2,'150','10')
-            
-#         else:
-            
-#             Wifi.active(False)
-#             time.sleep_ms(500)
-#             Wifi.active(True)
-#             time.sleep_ms(500)
-#             a = 0
-
-#             for i in range (0,10):
-#                 try:
-#                     a += 1
-#                     BlinkPin(2,'250','2')
-#                     time.sleep_ms(500)                
-#                     print('initializing the connection...\r\n')
-                    
-#                     if a == 10:
-#                         print(f"You entered SSID: {SSID} and Password: {Password}; one of each might be wrong, try again...")
-#                         break
-
-#                     elif Wifi.isconnected():
-#                         print(f'Successfully connected to {SSID}.\n\r'
-#                             f'IP: {Wifi.ifconfig()[0]}\n\r'
-#                             f'Subnet: {Wifi.ifconfig()[1]}\n\r'
-#                             f'Gateway: {Wifi.ifconfig()[2]}\n\r'
-#                             f'DNS: {Wifi.ifconfig()[3]}\n\r')
-#                         BlinkPin(2,'150','2')
-#                         break
-
-#                     else:
-#                         Wifi.connect(SSID,Password)
-#                         time.sleep_ms(500)
-                    
-#                 except:
-#                         print('Retry...\n\r')
-#                         pass
-
-
-#     elif not Wifi_Connection and SSID !='' and Password != '': #default values of this function.
-#         Wifi.active(True)
-#         time.sleep_ms(500)
-#         Wifi.disconnect()
-#         time.sleep_ms(500)
-#         Wifi.active(False)
-#         time.sleep_ms(500)
-#         BlinkPin(2,'350','2')
-#         print("Wifi_Connection has been disabled and Network turned off.")
-
-# NetworkConnection(Wifi_Connection=False, SSID= 'TP-LINK', Password='36516188')
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-
-def NetworkStatus():
-    Wifi = network.WLAN(network.STA_IF)
-
-    if Wifi.isconnected():
-        print(f'Device is connected to LAN.\n\r'
+    def Status(self):
+        Wifi = network.WLAN(network.STA_IF)
+        if Wifi.isconnected():
+            print(f'Device is connected to {self.SSId}.\n\r'
             f'IP: {Wifi.ifconfig()[0]}\n\r'
             f'Subnet: {Wifi.ifconfig()[1]}\n\r'
             f'Gateway: {Wifi.ifconfig()[2]}\n\r'
             f'DNS: {Wifi.ifconfig()[3]}\n\r')
+        else:
+            print('Device is not connected to any network.')
 
-    else:
-        print('Network is off')
+    def Disconnect(self):
+        Wifi = network.WLAN(network.STA_IF)
+        Wifi.active(True)
+        time.sleep_ms(500)
+        Wifi.disconnect()
+        time.sleep_ms(500)
+        Wifi.active(False)
+        time.sleep_ms(500)
+        BlinkPin(2,'1000','1')
+        print("Wifi_Connection has been disabled and Network turned off.")
 
-# NetworkStatus()
+Home = Internet()
+# Home.Seasrch()
+# Home.Connection()
+# Home.Connection('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1')
+# Home.Status()
+Home.Disconnect()
+# time.sleep(1)
 
-
-
+# ---------------------------------------------------------------------------------------------------------
 # def Sign_up (): #for now it must be declared mannually inside the code:
 
 #     global GlobalMobileno, GlobalUserName,GlobalPassword
@@ -280,5 +228,3 @@ def NetworkStatus():
 #     else:
 #         print('Wrong Information')
 #         return False
-
-
