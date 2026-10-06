@@ -1,6 +1,8 @@
 import machine
 import time
 import network
+import socket
+
 
 
 def SwitchPinPosition(pins,position):#it switches position of the given Pin
@@ -29,8 +31,6 @@ def BlinkPin(pins = 2 ,duration_ms = '300', repetition = '1'):# it makes the giv
             time.sleep_ms(int(duration_ms))
             SwitchPinPosition(DefaultPin,0)
             time.sleep_ms(int(duration_ms))
-
-BlinkPin()
 
 class Internet():
     def __init__(self,Wifi_Connection = True ,SSId = '', Password = ''):
@@ -126,6 +126,9 @@ class Internet():
                 BlinkPin(2,'350','2')
                 print("Wifi_Connection has been disabled and Network turned off.")
 
+        elif StaticIP =='' or SubnetMask == '' or  GateWay == '' or  Dns =='':
+            print ('Declare all of the parameters including (StaticIp, SubnetMask, GateWay, Dns)')
+        
         elif StaticIP !='' and SubnetMask != '' and GateWay != '' and Dns !='':
             Wifi = network.WLAN(network.STA_IF)
             if self.Wifi_Connection:
@@ -185,6 +188,7 @@ class Internet():
 
     def Status(self):
         Wifi = network.WLAN(network.STA_IF)
+
         if Wifi.isconnected():
             print(f'Device is connected to {self.SSId}.\n\r'
             f'IP: {Wifi.ifconfig()[0]}\n\r'
@@ -194,6 +198,22 @@ class Internet():
         else:
             print('Device is not connected to any network.')
 
+    def StatusForChild(self,StaticIP): #just for supperior methodes to check if the module is connected to the internet
+        Wifi = network.WLAN(network.STA_IF)
+        if Wifi.isconnected():
+
+            if StaticIP =='':
+                return True
+            
+            elif Wifi.ifconfig()[0] == StaticIP:
+                return True
+
+            else:
+                return False
+
+        else:
+            return False
+        
     def Disconnect(self):
         Wifi = network.WLAN(network.STA_IF)
         Wifi.active(True)
@@ -205,13 +225,111 @@ class Internet():
         BlinkPin(2,'1000','1')
         print("Wifi_Connection has been disabled and Network turned off.")
 
+class WebServer(Internet):
+
+    html = """<!DOCTYPE html>
+                    <html>
+                        <body>
+                            <h1 style="text-align: center; margin-top: 45vh;">
+                                Hello Saman, this is ESP32 from inside.
+                            </h1>
+                        </body>
+                    </html>"""
+    
+    def __init__(self, Wifi_Connection = True, SSId = '', Password = '', Port = 8008, ):
+        super().__init__(Wifi_Connection= Wifi_Connection,SSId= SSId,Password= Password)
+        self.Port = Port
+        
+            # s.close() will close the socket
+            # user must enter the Active status which could be True or False, 
+            # True will be in the condition of the While True(While Active: accept the socket ...)
+    
+    def WebServerSetting(self):
+        print('Starting Webserver...')
+        Wifi = network.WLAN(network.STA_IF)
+        S = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        S.bind(('',int(self.Port)))
+        S.listen(5)
+        print(f'WebServer started:\n\rServerIp: {Wifi.ifconfig()[0]}\n\rServerPort: {self.Port}')
+        while True:
+            # Accept the socket
+            conn, addr = S.accept()
+            print(f"Connected to {addr}")
+
+            # Receive from the socket
+            request = conn.recv(1024)
+            print(f"Content {str(request)} has received.")
+            response = WebServer.html
+            conn.send(b"HTTP/1.1 200 OK\r\n")
+            conn.send(b"Content-Type: text/html\r\n")
+            conn.send(b"Connection: close\r\n")
+            conn.send(b"\r\n")
+            conn.sendall(response.encode())
+
+            # Socket close
+            conn.close()
+
+    def StartServer(self,StaticIp = '',SubnetMask = '', GateWay = '', Dns = ''):
+        self.serverip = StaticIp
+        self.SubnetMask = SubnetMask
+        self.GateWay = GateWay
+        self.Dns = Dns
+
+        for i in range (0,4):
+            print(f'round {i}')
+            if i == 3:
+                print('Failed to stablish server ')
+                break
+
+            elif super().StatusForChild(self.serverip):
+                print('Initializing the WebServer')
+                self.WebServerSetting()
+            
+            elif not super().StatusForChild(self.serverip):
+                print('test not connected')
+                super().Connection(StaticIP=self.serverip,SubnetMask=self.SubnetMask,GateWay=self.GateWay,Dns=self.Dns)
+
+    def StopServer(self):
+        S = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        S.close()
+        print ('Webserver stopped.')
+
+
+#HTML codes
+# WebServer.html =  """<!DOCTYPE html>
+#             <html>
+#                 <body>
+#                     <h1 style="text-align: center; margin-top: 45vh;">
+#                         Hello Saman, this is ESP32 Outside of the class.
+#                     </h1>
+#                 </body>
+#             </html>"""
+
+BlinkPin()
+
+
+# Home = Internet(SSId='',Password='')
 Home = Internet()
+
+ESP32 = WebServer(SSId='',Password='',Port=8080)
+
+# ESP32.StartServer('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1')
+ESP32.StopServer()
 # Home.Seasrch()
 # Home.Connection()
-# Home.Connection('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1')
-# Home.Status()
+# Home.Connection('192.168.1.33','255.255.255.0','192.168.1.1','192.168.1.1')
 Home.Disconnect()
 # time.sleep(1)
+# Home.Status()
+
+# ESP32.StartServer()
+# ESP32.StopServer()
+# time.sleep(1)
+
+# ESP32.StopServer()
+# Home.Disconnect()
+
+
 
 # ---------------------------------------------------------------------------------------------------------
 # def Sign_up (): #for now it must be declared mannually inside the code:
