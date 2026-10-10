@@ -3,6 +3,7 @@ import time
 import network
 import socket
 
+DefaultPin = machine.Pin(2,machine.Pin.OUT)
 
 
 def SwitchPinPosition(pins,position):#it switches position of the given Pin
@@ -16,7 +17,7 @@ def SwitchPinPosition(pins,position):#it switches position of the given Pin
     #     print("wrong position, 0 as LOW and 1 as HIGH.")
 
 def BlinkPin(pins = 2 ,duration_ms = '300', repetition = '1'):# it makes the given Pin blinking with a given frequency
-    DefaultPin = machine.Pin(pins,machine.Pin.OUT)
+
     
     if repetition == '1':
         for i in range (0,3):
@@ -127,7 +128,7 @@ class Internet():
                 print("Wifi_Connection has been disabled and Network turned off.")
 
         elif StaticIP =='' or SubnetMask == '' or  GateWay == '' or  Dns =='':
-            print ('Declare all of the parameters including (StaticIp, SubnetMask, GateWay, Dns)')
+            print ('Declare all parameters including (StaticIp, SubnetMask, GateWay, Dns)')
         
         elif StaticIP !='' and SubnetMask != '' and GateWay != '' and Dns !='':
             Wifi = network.WLAN(network.STA_IF)
@@ -223,7 +224,7 @@ class Internet():
         Wifi.active(False)
         time.sleep_ms(500)
         BlinkPin(2,'1000','1')
-        print("Wifi_Connection has been disabled and Network turned off.")
+        print("Wifi_Connection disabled and Network turned off.")
 
 class WebServer(Internet):
 
@@ -235,7 +236,7 @@ class WebServer(Internet):
                             </h1>
                         </body>
                     </html>"""
-    
+    IpRequestDict = {}
     def __init__(self, Wifi_Connection = True, SSId = '', Password = '', Port = 8008, ):
         super().__init__(Wifi_Connection= Wifi_Connection,SSId= SSId,Password= Password)
         self.Port = Port
@@ -245,20 +246,29 @@ class WebServer(Internet):
             # True will be in the condition of the While True(While Active: accept the socket ...)
     
     def WebServerSetting(self):
+
         print('Starting Webserver...')
         Wifi = network.WLAN(network.STA_IF)
         S = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        S.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         S.bind(('',int(self.Port)))
         S.listen(5)
-        print(f'WebServer started:\n\rServerIp: {Wifi.ifconfig()[0]}\n\rServerPort: {self.Port}')
+        BlinkPin(2,'124','4')
+        print(f'WebServer started.\n\rServerAdress: {Wifi.ifconfig()[0]}:{self.Port}')
         while True:
-            # Accept the socket
+ 
             conn, addr = S.accept()
-            print(f"Connected to {addr}")
 
-            # Receive from the socket
+            if addr[0] not in self.IpRequestDict.keys(): 
+                self.IpRequestDict.update({addr[0]:0})
+            elif addr[0] in self.IpRequestDict.keys():
+                self.IpRequestDict[addr[0]] += 1
+
+            print(self.IpRequestDict)
+
+            print(f"Connected to {addr}")
             request = conn.recv(1024)
-            print(f"Content {str(request)} has received.")
+            # print(f"Content {request} has received.")
             response = WebServer.html
             conn.send(b"HTTP/1.1 200 OK\r\n")
             conn.send(b"Content-Type: text/html\r\n")
@@ -266,36 +276,61 @@ class WebServer(Internet):
             conn.send(b"\r\n")
             conn.sendall(response.encode())
 
-            # Socket close
-            conn.close()
+            if ('GET /state?value=ON') in request:
+                print('Pin 2 on')
+                SwitchPinPosition(DefaultPin,1)
 
+            elif ('GET /state?value=OFF') in request:
+                print('Pin 2 off')
+                SwitchPinPosition(DefaultPin,0)
+            conn.close()
+        
     def StartServer(self,StaticIp = '',SubnetMask = '', GateWay = '', Dns = ''):
-        self.serverip = StaticIp
+        self.staticip = StaticIp
         self.SubnetMask = SubnetMask
         self.GateWay = GateWay
         self.Dns = Dns
 
-        for i in range (0,4):
-            print(f'round {i}')
-            if i == 3:
-                print('Failed to stablish server ')
-                break
 
-            elif super().StatusForChild(self.serverip):
-                print('Initializing the WebServer')
-                self.WebServerSetting()
+        for i in range (0,3):
             
-            elif not super().StatusForChild(self.serverip):
-                print('test not connected')
-                super().Connection(StaticIP=self.serverip,SubnetMask=self.SubnetMask,GateWay=self.GateWay,Dns=self.Dns)
-
+                if i == 2:
+                    print('Failed to stablish server, Restart the device or check your SSID an Password')
+                    break
+                
+                elif super().StatusForChild(self.staticip):
+                        print('Initializing the WebServer...')
+                        self.WebServerSetting()
+                    
+                elif not super().StatusForChild(self.staticip):
+                        print('Retry checking the connection...')
+                        super().Connection(StaticIP=self.staticip,SubnetMask=self.SubnetMask,GateWay=self.GateWay,Dns=self.Dns)
+            
     def StopServer(self):
         S = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         S.close()
         print ('Webserver stopped.')
 
+BlinkPin()
 
-#HTML codes
+# ----------------------------------------------------------------class Internet annd it's methodes
+Home = Internet(SSId='',Password='')
+# Home = Internet()
+# Home.Status()
+# Home.Seasrch()
+# Home.Connection()
+# Home.Connection('192.168.1.33','255.255.255.0','192.168.1.1','192.168.1.1')
+# Home.Disconnect()
+
+# --------------------------------------------------------------------class WebServer and it's methodes
+
+ESP32 = WebServer(SSId='TP-LINK',Password='36516188',Port=8008)
+# ESP32 = WebServer(SSId='HuAwEi',Password='123456789',Port=8008)
+
+
+
+# #HTML codes should be passed here
+
 # WebServer.html =  """<!DOCTYPE html>
 #             <html>
 #                 <body>
@@ -304,45 +339,28 @@ class WebServer(Internet):
 #                     </h1>
 #                 </body>
 #             </html>"""
+# ------------------------------------------------------------------------------------------------buttons on html
 
-BlinkPin()
+WebServer.html = """<!DOCTYPE html>
+                    <button id="b">Switch Pin 2</button>
+                    <p id="t">Pin 2 is OFF</p>
 
+                    <script>
+                        let on = false;
 
-# Home = Internet(SSId='',Password='')
-Home = Internet()
+                        b.onclick = () => {
+                            on = !on;
+                            let state = on ? "OFF" : "ON";
 
-ESP32 = WebServer(SSId='',Password='',Port=8080)
+                            
+                            t.textContent = "Pin 2 is " + state;
 
-# ESP32.StartServer('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1')
-ESP32.StopServer()
-# Home.Seasrch()
-# Home.Connection()
-# Home.Connection('192.168.1.33','255.255.255.0','192.168.1.1','192.168.1.1')
-Home.Disconnect()
-# time.sleep(1)
-# Home.Status()
+                            fetch("/state?value=" + state);
+                        };
+                    </script>"""
 
+# b.textContent = state;
 # ESP32.StartServer()
-# ESP32.StopServer()
-# time.sleep(1)
-
+ESP32.StartServer('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1')
 # ESP32.StopServer()
 # Home.Disconnect()
-
-
-
-# ---------------------------------------------------------------------------------------------------------
-# def Sign_up (): #for now it must be declared mannually inside the code:
-
-#     global GlobalMobileno, GlobalUserName,GlobalPassword
-#     GlobalMobileno = input("Enter User mobile number: ").strip()#itm ust be read from the network input
-#     GlobalUserName = input("Enter User username: ").strip()
-#     GlobalPassword = input("Enter User password: ").strip()
-
-# def Authentication (PersonalMobileNo, PersonalUserName, PersonalPassword): #it controlls the authority of the user to send or receive any command
-#     if (((GlobalMobileno == PersonalMobileNo) or (GlobalUserName == PersonalUserName)) 
-#         and GlobalPassword == PersonalPassword):
-#         return True
-#     else:
-#         print('Wrong Information')
-#         return False

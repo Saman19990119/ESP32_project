@@ -3,4 +3,21 @@ if you enter the password or SSID wrongly, it will raise an error and will go fo
 after that you should figure out that you have entered password wrong.
 1.Fix:
 it must run for 10 times and after that tells you:
-"You entered SSID: {SSID} and Password: {Password}; one of each might be wrong, try again..."
+"You entered SSID: {SSID} and Password: {Password}; one of each might be wrong, try again..." 
+---------------------SOLVED
+-------------------------------------------------------------------------
+2. Regarding to the WebServer class:
+when one is connected to the module, and does not close their browser, and the operator wants to stop and start the module or
+in any condition it must be restarted, it gives error of the last connection is remained, 
+2.Solution:
+the operator must disconnect and reconnect the module and starts the server again.
+or in any other conditions the users must be handled in addition to set some sort of time limitation for every individual IP connected
+to the module. to be more precise, when a connection is active and sometimes when the socket is active and forcibely restart the module, 
+webserver won't start with the error of:
+					Traceback (most recent call last):
+  					File "<stdin>", line 359, in <module>
+ 					File "<stdin>", line 299, in StartServer
+  					File "<stdin>", line 252, in WebServerSetting
+					OSError: [Errno 112] EADDRINUSE
+-----------------------SOLVED
+-------------------------------------------------------------------------------------------------------------
