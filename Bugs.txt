@@ -6,6 +6,7 @@ it must run for 10 times and after that tells you:
 "You entered SSID: {SSID} and Password: {Password}; one of each might be wrong, try again..." 
 ---------------------SOLVED
 -------------------------------------------------------------------------
+
 2. Regarding to the WebServer class:
 when one is connected to the module, and does not close their browser, and the operator wants to stop and start the module or
 in any condition it must be restarted, it gives error of the last connection is remained, 
@@ -21,3 +22,12 @@ webserver won't start with the error of:
 					OSError: [Errno 112] EADDRINUSE
 -----------------------SOLVED
 -------------------------------------------------------------------------------------------------------------
+
+3. WevServer class:
+when server stays on for more than 10 minutes , nobody can conneect, and no ip would be accepted all of a sudden.
+3. Solution:
+there must be on protocol which tests the server connectivity status, if it failed after every 5 minutes, it should stop the socket and 
+starts the whole socket again.
+---------------------------------SOLVED
+with the using of S.settimeout(30.0) it'll close all the connections and restart the socket every 30 seconds.
+-----------------------------------------------------------------------------------------------------------------------
