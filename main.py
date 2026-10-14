@@ -2,6 +2,7 @@ import machine
 import time
 import network
 import socket
+# import asyncio
 
 DefaultPin = machine.Pin(2,machine.Pin.OUT)
 
@@ -228,6 +229,7 @@ class WebServer(Internet):
                         </body>
                     </html>"""
     IpRequestDict = {}
+    
     def __init__(self, Wifi_Connection = True, SSId = '', Password = '', Port = 8008, ):
         super().__init__(Wifi_Connection= Wifi_Connection,SSId= SSId,Password= Password)
         self.Port = Port
@@ -317,7 +319,6 @@ class WebServer(Internet):
         self.GateWay = GateWay
         self.Dns = Dns
 
-
         for i in range (0,3):
             
                 if i == 2:
@@ -387,7 +388,7 @@ WebServer.html = """<!DOCTYPE html>
 
 # b.textContent = state;
 # ESP32.StartServer()
-ESP32.StartServer('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1')
-# ESP32.StopServer()
-# Home.Disconnect()
-print('enddddddddddddddddddddddddddddddddddddddddddddddddddddddd')
+# ESP32.StartServer('192.168.1.32','255.255.255.0','192.168.1.1','192.168.1.1')
+ESP32.StopServer()
+Home.Disconnect()
+# print('enddddddddddddddddddddddddddddddddddddddddddddddddddddddd')
